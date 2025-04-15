@@ -6,14 +6,18 @@ import requests
 import os
 from django.core.files.storage import default_storage
 from .serializers import AudioFileSerializer
-from .models import AudioFile, TranscriptionSummary,TranscriptSegment
+from .models import AudioFile, TranscriptionSummary, TranscriptSegment
 from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAuthenticated
 
 
 User = get_user_model()
 
 class TranscribeResultView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
+        print("✅ TranscribeResultView tetiklendi:", request.user)
         try:
             result = request.data['results'][0]
 
@@ -34,7 +38,6 @@ class TranscribeResultView(APIView):
             if serializer.is_valid():
                 audio_file = serializer.save()
 
-                # Summary kaydı
                 TranscriptionSummary.objects.create(
                     audio_file=audio_file,
                     summary_text=result['summary']
@@ -59,7 +62,6 @@ class UploadAndTranscribeView(APIView):
         file_path = default_storage.save(file_obj.name, file_obj)
         abs_file_path = os.path.join(default_storage.location, file_path)
 
-        # FastAPI’ye dosyayı gönder
         with open(abs_file_path, 'rb') as f:
             files = [('files', (file_obj.name, f, 'audio/wav'))]
             try:
@@ -95,27 +97,3 @@ class UploadAndTranscribeView(APIView):
 
             except Exception as e:
                 return Response({"error": str(e)}, status=500)
-
-class SaveTranscriptionAPIView(APIView):
-    def post(self, request):
-        filename = request.data.get("filename")
-        transcript = request.data.get("transcript", [])
-        summary = request.data.get("summary", "")
-
-        audio = AudioFile.objects.create(filename=filename)
-
-        for segment in transcript:
-            TranscriptSegment.objects.create(
-                audiofile=audio,
-                speaker=segment["speaker"],
-                start=segment["start"],
-                end=segment["end"],
-                text=segment["text"]
-            )
-
-        TranscriptionSummary.objects.create(
-            audiofile=audio,
-            summary=summary
-        )
-
-        return Response({"message": "Başarıyla kaydedildi"}, status=status.HTTP_201_CREATED)

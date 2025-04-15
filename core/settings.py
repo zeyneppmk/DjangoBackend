@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -27,7 +28,12 @@ SECRET_KEY = 'django-insecure-f#2++^!-tg5y0gsxeir^9*8j4t&(op1kj@080mgem+kg_^#%tt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "host.docker.internal"
+
+]
 
 
 # Application definition
@@ -55,7 +61,14 @@ REST_FRAMEWORK = {
     ),
 }
 
-
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),       # access token süresi
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),         # refresh token süresi
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),                    # token'ı "Bearer <token>" şeklinde gönder
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
