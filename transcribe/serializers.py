@@ -16,9 +16,18 @@ class AudioFileSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         segments_data = validated_data.pop('segments')
-        user = self.context['request'].user  # auth varsa
-        audio_file = AudioFile.objects.create(user=user, **validated_data)
+        request = self.context.get("request")
+        user = request.user if request and request.user.is_authenticated else None
 
+        if not user:
+            username = request.data.get('username') if request else None
+        from users.models import CustomUser
+        try:
+            user = CustomUser.objects.get(username=username)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("Kullanıcı bulunamadı.")
+
+        audio_file = AudioFile.objects.create(user=user, **validated_data)
         for idx, segment in enumerate(segments_data):
             TranscriptSegment.objects.create(audio_file=audio_file, order=idx, **segment)
 

@@ -9,7 +9,7 @@ from .serializers import AudioFileSerializer
 from .models import AudioFile, TranscriptionSummary, TranscriptSegment
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.decorators import api_view, permission_classes
 
 User = get_user_model()
 
@@ -17,6 +17,8 @@ class TranscribeResultView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        print("👤 Gelen user:", request.user)
+        print("🛡 Authenticated?", request.user.is_authenticated)
         print("✅ TranscribeResultView tetiklendi:", request.user)
         try:
             result = request.data['results'][0]
@@ -45,6 +47,7 @@ class TranscribeResultView(APIView):
 
                 return Response({"detail": "Transcription and summary saved!"}, status=status.HTTP_201_CREATED)
             else:
+                print("❌ Serializer Hataları:", serializer.errors)  # ← buraya
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -97,3 +100,8 @@ class UploadAndTranscribeView(APIView):
 
             except Exception as e:
                 return Response({"error": str(e)}, status=500)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def whoami(request):
+    return Response({"user": request.user.username})
