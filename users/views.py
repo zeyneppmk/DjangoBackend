@@ -1,5 +1,5 @@
 from rest_framework import generics, permissions, status
-from .serializers import RegisterSerializer, UserSerializer, ChangePasswordSerializer
+from .serializers import RegisterSerializer, ProfileSerializer, ChangePasswordSerializer
 #Projeye tanımlanmış kullanıcı modelini dinamik olarak getirir (CustomUser)
 from django.contrib.auth import get_user_model
 #API isteklerine verilecek yanıtları olusturmak
@@ -15,7 +15,7 @@ class RegisterView(generics.CreateAPIView):
 
 #profil sayfasini dondurur
 class ProfileView(generics.RetrieveAPIView):
-    serializer_class = UserSerializer
+    serializer_class = ProfileSerializer
     #sadece giris yapanlar erisebilir.
     permission_classes = [permissions.IsAuthenticated]
 
