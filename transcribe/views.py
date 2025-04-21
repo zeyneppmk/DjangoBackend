@@ -22,7 +22,7 @@ class TranscribeResultView(APIView):
         print("✅ TranscribeResultView tetiklendi:", request.user)
         try:
             result = request.data['results'][0]
-
+ 
             data = {
                 'filename': result['filename'],
                 'audio_url': result['filename'],
