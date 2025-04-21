@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.tokens import RefreshToken 
 
-#projede olusturulan CustomUser modelini kullanmis oluyorum default olani degil
+#projede olusturulan CustomUser modelini kullanmis oluyorum default olani degildir
 User = get_user_model()
 
 #yeni bir kullanici kaydederken kullanilan sinif
