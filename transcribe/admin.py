@@ -4,6 +4,8 @@ from .models import AudioFile, TranscriptSegment, TranscriptionSummary
 @admin.register(AudioFile)
 class AudioFileAdmin(admin.ModelAdmin):
     list_display = ('id', 'filename', 'user', 'uploaded_at')
+    list_filter = ('uploaded_at', 'user')
+    search_fields = ('filename', 'user__username')
 
 @admin.register(TranscriptSegment)
 class TranscriptSegmentAdmin(admin.ModelAdmin):
