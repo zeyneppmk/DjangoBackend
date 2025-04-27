@@ -26,12 +26,17 @@ class TranscriptSegment(models.Model):
         ordering = ['order']
 
     def __str__(self):
-        return f"{self.speaker} [{self.start_time}-{self.end_time}]"
-
+        return f"{self.audio_file.filename}_transcript"
+    
+    @classmethod
+    def get_full_transcript(cls, audio_file):
+        segments = cls.objects.filter(audio_file=audio_file).order_by('order')
+        full_text = " ".join(segment.text for segment in segments)
+        return full_text
 
 class TranscriptionSummary(models.Model):
     audio_file = models.OneToOneField(AudioFile, on_delete=models.CASCADE, related_name='summary')
     summary_text = models.TextField()
 
     def __str__(self):
-        return f"Summary for {self.audio_file.filename}"
+        return f"{self.audio_file.filename}_summary"
