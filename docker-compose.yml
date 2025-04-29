@@ -1,16 +1,17 @@
-
+'''
 services:
-  db:
-    image: postgres:14
-    restart: always
-    environment:
-      POSTGRES_DB: whisperdatabase
-      POSTGRES_USER: blueuser
-      POSTGRES_PASSWORD: zeynephasret3455
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+db:
+image: postgres:14
+restart: always
+environment:
+POSTGRES_DB: whisperdatabase
+POSTGRES_USER: blueuser
+POSTGRES_PASSWORD: zeynephasret3455
+ports:
+- "5432:5432"
+volumes:
+- pgdata:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+pgdata:
+'''

@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'transcribe',
+    'adminpanel',
 ]
 
 #gelen/giden isteklerin isledigi ara katmanlardir.
@@ -113,7 +114,7 @@ DATABASES = {
         'USER': 'blueuser',                 # docker-compose içindeki kullanıcı
         'PASSWORD': 'zeynephasret3455',     # şifre aynı olmalı
         'HOST': 'localhost',
-        'PORT': '5432',
+        'PORT': '5433',
     }
 }
 

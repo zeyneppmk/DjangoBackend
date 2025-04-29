@@ -34,7 +34,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "email")
+        fields = ("id", "username", "email", 'is_staff', 'is_superuser') #buraya is_staff ve is_superuser bilgisi eklendi admin girişi yapılabilmesi için(hasret)
 
 class ChangePasswordSerializer(serializers.Serializer):
         old_password = serializers.CharField(required=True)
