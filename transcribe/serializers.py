@@ -5,14 +5,21 @@ class TranscriptSegmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = TranscriptSegment
         fields = ['speaker', 'start_time', 'end_time', 'text', 'order']
+        read_only_fields = ['order']
 
+class TranscriptionSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TranscriptionSummary
+        fields = ['summary_text']
 
 class AudioFileSerializer(serializers.ModelSerializer):
     segments = TranscriptSegmentSerializer(many=True, write_only=True)
+    summary = TranscriptionSummarySerializer(read_only=True)
 
     class Meta:
         model = AudioFile
-        fields = ['filename', 'audio_url', 'segments']
+        fields = ['id', 'filename', 'content', 'uploaded_at', 'segments', 'summary']
+        read_only_fields = ['uploaded_at', 'content', 'id']
 
     def create(self, validated_data):
         segments_data = validated_data.pop('segments')
@@ -20,12 +27,9 @@ class AudioFileSerializer(serializers.ModelSerializer):
         user = request.user if request and request.user.is_authenticated else None
 
         if not user:
-            username = request.data.get('username') if request else None
-        from users.models import CustomUser
-        try:
-            user = CustomUser.objects.get(username=username)
-        except CustomUser.DoesNotExist:
-            raise serializers.ValidationError("Kullanıcı bulunamadı.")
+            raise serializers.ValidationError("Kullanıcı doğrulaması başarısız.")
+    
+        # Cloudinary yükleme ve content URL'si burada ayarlanacak (views içinde halledeceğiz)
 
         audio_file = AudioFile.objects.create(user=user, **validated_data)
         for idx, segment in enumerate(segments_data):
@@ -34,7 +38,4 @@ class AudioFileSerializer(serializers.ModelSerializer):
         return audio_file
 
 
-class TranscriptionSummarySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TranscriptionSummary
-        fields = ['summary_text']
+

@@ -1,107 +1,82 @@
+import requests
+import os
+import httpx
+import uuid 
+import asyncio
+
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework import status
-import requests
-import os
 from django.core.files.storage import default_storage
 from .serializers import AudioFileSerializer
 from .models import AudioFile, TranscriptionSummary, TranscriptSegment
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
+from .utils import upload_to_cloudinary, send_audio_to_fastapi
 
 User = get_user_model()
 
-class TranscribeResultView(APIView):
+class AudioUploadAndTranscribeView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        print("👤 Gelen user:", request.user)
-        print("🛡 Authenticated?", request.user.is_authenticated)
-        print("✅ TranscribeResultView tetiklendi:", request.user)
-        try:
-            result = request.data['results'][0]
- 
-            data = {
-                'filename': result['filename'],
-                'audio_url': result['filename'],
-                'segments': [
-                    {
-                        "speaker": seg["speaker"],
-                        "start_time": seg["start"],
-                        "end_time": seg["end"],
-                        "text": seg["text"]
-                    } for seg in result['transcript']
-                ]
-            }
+    def post(self, request, *args, **kwargs):
+        file = request.FILES.get('file')
 
-            serializer = AudioFileSerializer(data=data, context={'request': request})
-            if serializer.is_valid():
-                audio_file = serializer.save()
+        if not file:
+            return Response({"error": "Ses dosyası bulunamadı."}, status=status.HTTP_400_BAD_REQUEST)
 
-                TranscriptionSummary.objects.create(
-                    audio_file=audio_file,
-                    summary_text=result['summary']
-                )
+        filename = f"{uuid.uuid4().hex}_{file.name}"
+        temp_audio_path = f"temp/{filename}"
 
-                return Response({"detail": "Transcription and summary saved!"}, status=status.HTTP_201_CREATED)
-            else:
-                print("❌ Serializer Hataları:", serializer.errors)  # ← buraya
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        os.makedirs(os.path.dirname(temp_audio_path), exist_ok=True)
 
+        with open(temp_audio_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
 
-class UploadAndTranscribeView(APIView):
-    parser_classes = [MultiPartParser]
+        # FastAPI'ye dosyayı gönder
+        fastapi_response = asyncio.run(send_audio_to_fastapi(temp_audio_path))
 
-    def post(self, request):
-        file_obj = request.FILES.get('file')
+        result = fastapi_response["results"][0]
+        segments = result.get("transcript")
+        summary = result.get("summary")
 
-        if not file_obj:
-            return Response({"error": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
+        # Ses dosyasını Cloudinary'ye yükle
+        audio_url = upload_to_cloudinary(temp_audio_path)
 
-        file_path = default_storage.save(file_obj.name, file_obj)
-        abs_file_path = os.path.join(default_storage.location, file_path)
+        # Veritabanına AudioFile kaydet
+        audio_file = AudioFile.objects.create(
+            user=request.user,
+            filename=file.name,
+            content=audio_url
+        )
 
-        with open(abs_file_path, 'rb') as f:
-            files = [('files', (file_obj.name, f, 'audio/wav'))]
-            try:
-                response = requests.post('http://localhost:8001/transcribe/', files=files)
-                if response.status_code != 200:
-                    return Response({"error": "FastAPI error", "detail": response.text}, status=500)
+        # Veritabanına TranscriptSegment kaydet
+        for idx, segment in enumerate(segments):
+            TranscriptSegment.objects.create(
+                audio_file=audio_file,
+                speaker=segment['speaker'],
+                start_time=segment['start'],
+                end_time=segment['end'],
+                text=segment['text'],
+                order=idx
+            )
 
-                result = response.json()['results'][0]
+        # Veritabanına TranscriptionSummary kaydet
+        TranscriptionSummary.objects.create(
+            audio_file=audio_file,
+            summary_text=summary
+        )
 
-                data = {
-                    'filename': result['filename'],
-                    'audio_url': result['filename'],
-                    'segments': [
-                        {
-                            "speaker": seg["speaker"],
-                            "start_time": seg["start"],
-                            "end_time": seg["end"],
-                            "text": seg["text"]
-                        } for seg in result['transcript']
-                    ]
-                }
+        # Geçici dosyaları temizle
+        os.remove(temp_audio_path)
 
-                serializer = AudioFileSerializer(data=data, context={'request': request})
-                if serializer.is_valid():
-                    audio_file = serializer.save()
-                    TranscriptionSummary.objects.create(
-                        audio_file=audio_file,
-                        summary_text=result['summary']
-                    )
-                    return Response({"detail": "Uploaded, transcribed and saved."}, status=201)
-                else:
-                    return Response(serializer.errors, status=400)
+        # AudioFile'ı serialize ederek frontend'e göster
+        serializer = AudioFileSerializer(audio_file, context={'request': request})
 
-            except Exception as e:
-                return Response({"error": str(e)}, status=500)
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def whoami(request):
-    return Response({"user": request.user.username})
+        return Response({
+            "message": "Dosya başarıyla yüklendi ve işlendi.",
+            "audio_file": serializer.data
+        }, status=status.HTTP_201_CREATED)

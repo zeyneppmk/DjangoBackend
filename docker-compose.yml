@@ -1,7 +1,7 @@
-
 services:
-  db:
+  db:  # 🔸 Mevcut haliyle korunuyor
     image: postgres:14
+    container_name: backend_django-db
     restart: always
     environment:
       POSTGRES_DB: whisperdatabase
@@ -11,6 +11,33 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+  django:  
+    container_name: backend_django-django
+    build:
+      context: "."
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - fastapi  
+    networks:
+      - app-network
+
+  fastapi:
+    image: whisper-api-img-with-model 
+    container_name: backend_django-fastapi
+    ports:
+      - "8001:8000"
+    networks:
+      - app-network
 
 volumes:
-  pgdata:
+  pgdata:  #Veritabanı için kalıcı depolama
+
+networks:
+  app-network:
+    driver: bridge

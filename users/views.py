@@ -19,6 +19,7 @@ class ProfileView(generics.RetrieveAPIView):
     #sadece giris yapanlar erisebilir.
     permission_classes = [permissions.IsAuthenticated]
 
+    #sadece kendi profilini(bilgilerinin) getirilmesini sağlar güvenlik acisindan önemlidir
     def get_object(self):
         return self.request.user
 
@@ -27,6 +28,7 @@ class ChangePasswordView(generics.UpdateAPIView):
     model = User
     permission_classes = [permissions.IsAuthenticated]
 
+    #sadece kendi sifrenisin getirilmesi icin
     def get_object(self):
         return self.request.user
 

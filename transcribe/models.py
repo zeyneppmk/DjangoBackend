@@ -24,9 +24,10 @@ class TranscriptSegment(models.Model):
 
     class Meta:
         ordering = ['order']
-
+        unique_together = ('audio_file', 'order')
+        
     def __str__(self):
-        return f"{self.audio_file.filename}_transcript"
+        return f"Transcript for {self.audio_file.filename}"
     
     @classmethod
     def get_full_transcript(cls, audio_file):
@@ -39,4 +40,4 @@ class TranscriptionSummary(models.Model):
     summary_text = models.TextField()
 
     def __str__(self):
-        return f"{self.audio_file.filename}_summary"
+        return f"Summary for {self.audio_file.filename}"
