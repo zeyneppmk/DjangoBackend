@@ -14,6 +14,7 @@ services:
     networks:
       - app-network
   django:  
+    image: backend-img
     container_name: backend_django-django
     build:
       context: "."
@@ -28,7 +29,7 @@ services:
       - app-network
 
   fastapi:
-    image: whisper-api-img-with-model 
+    image: whisper-api-img-with-model  
     container_name: backend_django-fastapi
     ports:
       - "8001:8000"

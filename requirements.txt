@@ -10,3 +10,4 @@ cloudinary
 httpx
 asyncio
 aiofiles
+fpdf

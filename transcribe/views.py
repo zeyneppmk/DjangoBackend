@@ -3,7 +3,7 @@ import os
 import httpx
 import uuid 
 import asyncio
-
+from rest_framework.generics import DestroyAPIView
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -14,7 +14,7 @@ from .models import AudioFile, TranscriptionSummary, TranscriptSegment
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
-from .utils import upload_to_cloudinary, send_audio_to_fastapi
+from .utils import upload_to_cloudinary, send_audio_to_fastapi, generate_pdf
 
 User = get_user_model()
 
@@ -40,8 +40,8 @@ class AudioUploadAndTranscribeView(APIView):
         fastapi_response = asyncio.run(send_audio_to_fastapi(temp_audio_path))
 
         result = fastapi_response["results"][0]
-        segments = result.get("transcript")
-        summary = result.get("summary")
+        segments = result.get("transcript", [])
+        summary = result.get("summary","")
 
         # Ses dosyasını Cloudinary'ye yükle
         audio_url = upload_to_cloudinary(temp_audio_path)
@@ -53,7 +53,8 @@ class AudioUploadAndTranscribeView(APIView):
             content=audio_url
         )
 
-        # Veritabanına TranscriptSegment kaydet
+        # Segmentleri kaydet
+        full_text = ""
         for idx, segment in enumerate(segments):
             TranscriptSegment.objects.create(
                 audio_file=audio_file,
@@ -63,6 +64,7 @@ class AudioUploadAndTranscribeView(APIView):
                 text=segment['text'],
                 order=idx
             )
+            full_text += segment["text"] + "\n"
 
         # Veritabanına TranscriptionSummary kaydet
         TranscriptionSummary.objects.create(
@@ -70,9 +72,22 @@ class AudioUploadAndTranscribeView(APIView):
             summary_text=summary
         )
 
+        # PDF üret ve yükle
+        transcript_pdf_path = generate_pdf(full_text, "Transkript")
+        summary_pdf_path = generate_pdf(summary, "Özet")
+
+        transcript_pdf_url = upload_to_cloudinary(transcript_pdf_path)
+        summary_pdf_url = upload_to_cloudinary(summary_pdf_path)
+
+        audio_file.transcript_pdf_url = transcript_pdf_url
+        audio_file.summary_pdf_url = summary_pdf_url
+        audio_file.save()           
+
         # Geçici dosyaları temizle
         os.remove(temp_audio_path)
-
+        os.remove(transcript_pdf_path)
+        os.remove(summary_pdf_path)
+        
         # AudioFile'ı serialize ederek frontend'e göster
         serializer = AudioFileSerializer(audio_file, context={'request': request})
 
@@ -80,3 +95,11 @@ class AudioUploadAndTranscribeView(APIView):
             "message": "Dosya başarıyla yüklendi ve işlendi.",
             "audio_file": serializer.data
         }, status=status.HTTP_201_CREATED)
+    
+class AudioFileDeleteView(DestroyAPIView):
+    queryset = AudioFile.objects.all()
+    serializer_class = AudioFileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)

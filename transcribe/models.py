@@ -8,7 +8,8 @@ class AudioFile(models.Model):
     filename = models.CharField(max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     content = models.URLField()
-   
+    transcript_pdf_url = models.URLField(blank=True, null=True)  # transcript PDF bağlantısı
+    summary_pdf_url = models.URLField(blank=True, null=True)      # summary PDF bağlantısı
 
     def __str__(self):
         return self.filename

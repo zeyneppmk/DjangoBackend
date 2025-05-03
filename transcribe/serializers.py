@@ -13,12 +13,14 @@ class TranscriptionSummarySerializer(serializers.ModelSerializer):
         fields = ['summary_text']
 
 class AudioFileSerializer(serializers.ModelSerializer):
-    segments = TranscriptSegmentSerializer(many=True, write_only=True)
+    segments = TranscriptSegmentSerializer(many=True, read_only=True)
     summary = TranscriptionSummarySerializer(read_only=True)
+    transcript_pdf_url = serializers.URLField(read_only=True)
+    summary_pdf_url = serializers.URLField(read_only=True)
 
     class Meta:
         model = AudioFile
-        fields = ['id', 'filename', 'content', 'uploaded_at', 'segments', 'summary']
+        fields = ['id', 'filename', 'content', 'uploaded_at', 'segments', 'summary','transcript_pdf_url', 'summary_pdf_url']
         read_only_fields = ['uploaded_at', 'content', 'id']
 
     def create(self, validated_data):

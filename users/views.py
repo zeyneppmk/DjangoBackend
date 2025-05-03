@@ -4,6 +4,9 @@ from .serializers import RegisterSerializer, ProfileSerializer, ChangePasswordSe
 from django.contrib.auth import get_user_model
 #API isteklerine verilecek yanıtları olusturmak
 from rest_framework.response import Response
+from transcribe.models import AudioFile
+from transcribe.serializers import AudioFileSerializer
+
 
 User = get_user_model()
 
@@ -48,3 +51,10 @@ class ChangePasswordView(generics.UpdateAPIView):
             return Response({"detail": "Şifre başarıyla değiştirildi."})
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserAudioHistoryView(generics.ListAPIView):
+    serializer_class = AudioFileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return AudioFile.objects.filter(user=self.request.user).order_by('-uploaded_at')

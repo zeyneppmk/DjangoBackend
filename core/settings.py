@@ -31,8 +31,8 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "host.docker.internal"
-
 ]
+
 #kimlik doğrulama (authentication) yöntemi ve endpointlere erisim
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
