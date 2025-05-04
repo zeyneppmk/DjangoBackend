@@ -39,7 +39,7 @@ async def send_audio_to_fastapi(file_path):
         raise Exception(f"FastAPI iletişim hatası: {str(e)}")
 
 
-def generate_pdf(text, title):
+def generate_pdf(content, title,is_summary=False):
     pdf = FPDF()
     pdf.add_page()
 
@@ -53,16 +53,31 @@ def generate_pdf(text, title):
         print(f"Font eklenirken hata: {e}")
 
     pdf.cell(200, 10, txt=title, ln=True, align="C")
-    pdf.multi_cell(0, 10, txt=text)
+    pdf.ln(10)
+
+    if is_summary:
+        # Sadece düz metni yaz
+        pdf.multi_cell(0, 10, txt=content)
+    else:
+        for segment in content:
+            try:
+                speaker = segment['speaker']
+                text = segment['text']
+                entry = f"{speaker}: {text}"
+                pdf.multi_cell(0, 10, txt=entry)
+                pdf.ln(5)
+            except Exception as e:
+                print(f"[Uyarı] Segment işlenemedi: {e}")
+                continue
 
     os.makedirs("temp", exist_ok=True)
     file_path = f"temp/{uuid.uuid4().hex}_{title}.pdf"
 
     try:
         pdf.output(file_path)
-        print(f" Dosya boyutu: {os.path.getsize(file_path)} byte")
+        print(f"PDF kaydedildi. Dosya boyutu: {os.path.getsize(file_path)} byte")
     except Exception as e:
         print(f"PDF kaydedilirken hata: {e}")
-    
+
     return file_path
 

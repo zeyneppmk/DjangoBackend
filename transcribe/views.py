@@ -59,10 +59,10 @@ class AudioUploadAndTranscribeView(APIView):
             TranscriptSegment.objects.create(
                 audio_file=audio_file,
                 speaker=segment['speaker'],
-                start_time=segment['start'],
-                end_time=segment['end'],
                 text=segment['text'],
-                order=idx
+                order=idx,
+                start_time=segment.get("start", 0.0),
+                end_time=segment.get("end", 0.0)
             )
             full_text += segment["text"] + "\n"
 
@@ -73,8 +73,8 @@ class AudioUploadAndTranscribeView(APIView):
         )
 
         # PDF üret ve yükle
-        transcript_pdf_path = generate_pdf(full_text, "Transkript")
-        summary_pdf_path = generate_pdf(summary, "Özet")
+        transcript_pdf_path = generate_pdf(segments, "Transkript",is_summary=False)
+        summary_pdf_path = generate_pdf(summary, "Özet", is_summary=True)
 
         transcript_pdf_url = upload_to_cloudinary(transcript_pdf_path)
         summary_pdf_url = upload_to_cloudinary(summary_pdf_path)
