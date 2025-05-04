@@ -11,3 +11,4 @@ httpx
 asyncio
 aiofiles
 fpdf
+pillow==10.2.0

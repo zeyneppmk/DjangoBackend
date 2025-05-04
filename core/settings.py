@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'transcribe',
+    'contents'
 ]
 
 #gelen/giden isteklerin isledigi ara katmanlardir.
