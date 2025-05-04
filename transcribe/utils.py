@@ -45,13 +45,12 @@ def generate_pdf(text, title):
 
     font_path = os.path.join(os.path.dirname(__file__), "..", "core", "fonts", "DejaVuSans.ttf")
     font_path = os.path.abspath(font_path)
-    print(f"📁 Font dosyası yolu: {font_path}")
 
     try:
         pdf.add_font("DejaVu", "", font_path, uni=True)
         pdf.set_font("DejaVu", size=12)
     except Exception as e:
-        print(f"❌ Font eklenirken hata: {e}")
+        print(f"Font eklenirken hata: {e}")
 
     pdf.cell(200, 10, txt=title, ln=True, align="C")
     pdf.multi_cell(0, 10, txt=text)
@@ -61,10 +60,9 @@ def generate_pdf(text, title):
 
     try:
         pdf.output(file_path)
-        print(f"✅ PDF dosyası oluşturuldu: {file_path}")
-        print(f"📦 Dosya boyutu: {os.path.getsize(file_path)} byte")
+        print(f" Dosya boyutu: {os.path.getsize(file_path)} byte")
     except Exception as e:
-        print(f"❌ PDF kaydedilirken hata: {e}")
+        print(f"PDF kaydedilirken hata: {e}")
     
     return file_path
 
