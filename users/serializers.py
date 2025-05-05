@@ -45,3 +45,9 @@ class ChangePasswordSerializer(serializers.Serializer):
             if attrs['new_password'] != attrs['new_password2']:
                 raise serializers.ValidationError({"new_password": "Yeni şifreler eşleşmiyor."})
             return attrs
+        
+class UserListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "username", "email", "is_staff", "is_superuser", "first_name", "last_name")
+

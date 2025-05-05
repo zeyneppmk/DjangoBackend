@@ -1,5 +1,5 @@
 from rest_framework import generics, permissions, status
-from .serializers import RegisterSerializer, ProfileSerializer, ChangePasswordSerializer
+from .serializers import RegisterSerializer, ProfileSerializer, ChangePasswordSerializer, UserListSerializer
 #Projeye tanımlanmış kullanıcı modelini dinamik olarak getirir (CustomUser)
 from django.contrib.auth import get_user_model
 #API isteklerine verilecek yanıtları olusturmak
@@ -58,3 +58,13 @@ class UserAudioHistoryView(generics.ListAPIView):
 
     def get_queryset(self):
         return AudioFile.objects.filter(user=self.request.user).order_by('-uploaded_at')
+    
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all().order_by("id")
+    serializer_class = UserListSerializer
+    permission_classes = [permissions.IsAdminUser]  # sadece admin görebilsin istersen
+
+class UserDeleteView(generics.DestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserListSerializer 
+    permission_classes = [permissions.IsAdminUser]
