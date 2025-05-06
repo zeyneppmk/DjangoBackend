@@ -23,7 +23,8 @@ def upload_pdf_to_cloudinary(file_path, folder="transcripts"):
         upload_result = cloudinary.uploader.upload(
             file_path,
             resource_type="auto",  # PDF için otomatik tanıma
-            folder=folder
+            folder=folder,
+            access_mode="public"
         )
         return upload_result["secure_url"]
     except cloudinary.exceptions.Error as e:
