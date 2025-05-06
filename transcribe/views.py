@@ -7,14 +7,14 @@ from rest_framework.generics import DestroyAPIView
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics, permissions
 from django.core.files.storage import default_storage
 from .serializers import AudioFileSerializer
 from .models import AudioFile, TranscriptionSummary, TranscriptSegment
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
-from .utils import upload_to_cloudinary, send_audio_to_fastapi, generate_pdf
+from .utils import upload_to_cloudinary, send_audio_to_fastapi, generate_pdf, upload_pdf_to_cloudinary
 
 User = get_user_model()
 
@@ -76,8 +76,8 @@ class AudioUploadAndTranscribeView(APIView):
         transcript_pdf_path = generate_pdf(segments, "Transkript",is_summary=False)
         summary_pdf_path = generate_pdf(summary, "Özet", is_summary=True)
 
-        transcript_pdf_url = upload_to_cloudinary(transcript_pdf_path)
-        summary_pdf_url = upload_to_cloudinary(summary_pdf_path)
+        transcript_pdf_url = upload_pdf_to_cloudinary(transcript_pdf_path)
+        summary_pdf_url = upload_pdf_to_cloudinary(summary_pdf_path)
 
         audio_file.transcript_pdf_url = transcript_pdf_url
         audio_file.summary_pdf_url = summary_pdf_url
@@ -103,4 +103,9 @@ class AudioFileDeleteView(DestroyAPIView):
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
+    
+class AdminAudioFileListView(generics.ListAPIView):
+    queryset = AudioFile.objects.all().order_by('-uploaded_at')
+    serializer_class = AudioFileSerializer
+    permission_classes = [permissions.IsAdminUser]
     

@@ -17,6 +17,18 @@ def upload_to_cloudinary(file_path, folder="transcripts"):
         return upload_result["secure_url"]
     except cloudinary.exceptions.Error as e:
         raise Exception(f"Cloudinary upload failed: {str(e)}")
+    
+def upload_pdf_to_cloudinary(file_path, folder="transcripts"):
+    try:
+        upload_result = cloudinary.uploader.upload(
+            file_path,
+            resource_type="auto",  # PDF için otomatik tanıma
+            folder=folder
+        )
+        return upload_result["secure_url"]
+    except cloudinary.exceptions.Error as e:
+        raise Exception(f"Cloudinary PDF upload failed: {str(e)}")
+
 
 async def send_audio_to_fastapi(file_path):
     # Doğru FastAPI endpoint

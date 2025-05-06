@@ -12,10 +12,8 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/transcribe/', include('transcribe.urls')), 
     path('api/contents/', include('contents.urls')), #hasret ekledi
-    path('api/token/', TokenObtainPairView.as_view(), 
-    name='token_obtain_pair'), #hasret ekledi
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), #hasret ekledi
-    path('api/', include('contents.urls')) #hasret ekledi 
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'), #hasret ekledi
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh') #hasret ekledi
 ]
 
 if settings.DEBUG:
