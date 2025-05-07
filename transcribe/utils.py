@@ -22,10 +22,13 @@ def upload_pdf_to_cloudinary(file_path, folder="transcripts"):
     try:
         upload_result = cloudinary.uploader.upload(
             file_path,
-            resource_type="auto",  # PDF için otomatik tanıma
+            resource_type="raw",
             folder=folder,
-            access_mode="public"
+            upload_preset="pdf_raw_public",
+            use_filename=True,
+            unique_filename=False
         )
+        print("Cloudinary Upload Sonucu:", upload_result)
         return upload_result["secure_url"]
     except cloudinary.exceptions.Error as e:
         raise Exception(f"Cloudinary PDF upload failed: {str(e)}")

@@ -58,7 +58,14 @@ class UserAudioHistoryView(generics.ListAPIView):
 
     def get_queryset(self):
         return AudioFile.objects.filter(user=self.request.user).order_by('-uploaded_at')
-    
+
+
+class UserAudioFileDeleteView(generics.DestroyAPIView):
+    serializer_class = AudioFileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return AudioFile.objects.filter(user=self.request.user)
 
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all().order_by("id")

@@ -96,14 +96,6 @@ class AudioUploadAndTranscribeView(APIView):
             "audio_file": serializer.data
         }, status=status.HTTP_201_CREATED)
     
-class AudioFileDeleteView(DestroyAPIView):
-    queryset = AudioFile.objects.all()
-    serializer_class = AudioFileSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
-    
 class AdminAudioFileListView(generics.ListAPIView):
     queryset = AudioFile.objects.all().order_by('-uploaded_at')
     serializer_class = AudioFileSerializer
