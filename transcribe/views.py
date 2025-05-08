@@ -9,10 +9,10 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.core.files.storage import default_storage
-from .serializers import AudioFileSerializer
+from .serializers import AudioFileSerializer,AudioFileAdminSerializer 
 from .models import AudioFile, TranscriptionSummary, TranscriptSegment
 from django.contrib.auth import get_user_model
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import api_view, permission_classes
 from .utils import upload_to_cloudinary, send_audio_to_fastapi, generate_pdf, upload_pdf_to_cloudinary
 
@@ -97,7 +97,8 @@ class AudioUploadAndTranscribeView(APIView):
         }, status=status.HTTP_201_CREATED)
     
 class AdminAudioFileListView(generics.ListAPIView):
-    queryset = AudioFile.objects.all().order_by('-uploaded_at')
-    serializer_class = AudioFileSerializer
-    permission_classes = [permissions.IsAdminUser]
+    serializer_class = AudioFileAdminSerializer
+    permission_classes = [IsAdminUser]
     
+    def get_queryset(self):
+        return AudioFile.objects.prefetch_related("segments", "summary").order_by("-uploaded_at")
