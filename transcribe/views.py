@@ -3,17 +3,13 @@ import os
 import httpx
 import uuid 
 import asyncio
-from rest_framework.generics import DestroyAPIView
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
-from rest_framework import status, generics, permissions
-from django.core.files.storage import default_storage
+from rest_framework import status, generics
 from .serializers import AudioFileSerializer,AudioFileAdminSerializer 
 from .models import AudioFile, TranscriptionSummary, TranscriptSegment
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework.decorators import api_view, permission_classes
 from .utils import upload_to_cloudinary, send_audio_to_fastapi, generate_pdf, upload_pdf_to_cloudinary
 
 User = get_user_model()
@@ -22,11 +18,12 @@ class AudioUploadAndTranscribeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        file = request.FILES.get('file')
+        #ses dosyasının reacttan alınması
+        file = request.FILES.get('file') 
 
         if not file:
             return Response({"error": "Ses dosyası bulunamadı."}, status=status.HTTP_400_BAD_REQUEST)
-
+        #geçiçi dosyaya kaydetme
         filename = f"{uuid.uuid4().hex}_{file.name}"
         temp_audio_path = f"temp/{filename}"
 
@@ -36,11 +33,14 @@ class AudioUploadAndTranscribeView(APIView):
             for chunk in file.chunks():
                 destination.write(chunk)
 
-        # FastAPI'ye dosyayı gönder
+        # FastAPI'ye gönderilen dosyasnın json verisinin fastapi_response atanması
         fastapi_response = asyncio.run(send_audio_to_fastapi(temp_audio_path))
 
+        #json dosyasının resulta atanması , dictionary yapısı
         result = fastapi_response["results"][0]
+        #konuşma segmentleri
         segments = result.get("transcript", [])
+        #özet
         summary = result.get("summary","")
 
         # Ses dosyasını Cloudinary'ye yükle

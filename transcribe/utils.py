@@ -48,7 +48,7 @@ async def send_audio_to_fastapi(file_path):
         # Hata varsa Exception fırlat
         response.raise_for_status()
 
-        # Başarılı yanıtı JSON olarak döndür
+        # fastapiden json dosyası
         return response.json()
 
     except httpx.HTTPError as e:
